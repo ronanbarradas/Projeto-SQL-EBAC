@@ -1,0 +1,328 @@
+{
+  "metadata": {
+    "kernelspec": {
+      "language": "python",
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "pygments_lexer": "ipython3",
+      "nbconvert_exporter": "python",
+      "version": "3.6.4",
+      "file_extension": ".py",
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "name": "python",
+      "mimetype": "text/x-python"
+    },
+    "kaggle": {
+      "accelerator": "none",
+      "dataSources": [],
+      "isInternetEnabled": true,
+      "language": "python",
+      "sourceType": "notebook",
+      "isGpuEnabled": false
+    },
+    "colab": {
+      "name": "Projeto SQL EBAC",
+      "provenance": []
+    }
+  },
+  "nbformat_minor": 0,
+  "nbformat": 4,
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Exploração e análise de dados de crédito utilizando o SQL\n",
+        "Esse notebook faz parte do curso de Análise de Dados EBAC - Módulo 36"
+      ],
+      "metadata": {
+        "id": "3PcCumiKSIyC"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Os dados representam informações de clientes de um banco e contam com as seguintes colunas:\n",
+        "\n",
+        "* idade = idade do cliente\n",
+        "* sexo = sexo do cliente (F ou M)\n",
+        "* dependentes = número de dependentes do cliente\n",
+        "* escolaridade = nível de escolaridade do clientes\n",
+        "* estado_civil = se é solteiro(a) ou casado(a)\n",
+        "* salario_anual = faixa salarial do cliente\n",
+        "* tipo_cartao = tipo de cartao do cliente\n",
+        "* qtd_produtos = quantidade de produtos comprados nos últimos 12 meses\n",
+        "* iteracoes_12m = quantidade de iterações/transacoes nos ultimos 12 meses\n",
+        "* meses_inativo_12m = quantidade de meses que o cliente ficou inativo\n",
+        "* limite_credito = limite de credito do cliente\n",
+        "* valor_transacoes_12m = valor das transações dos ultimos 12 meses\n",
+        "* qtd_transacoes_12m = quantidade de transacoes dos ultimos 12 meses\n",
+        "\n",
+        "A tabela foi criada no AWS Athena junto com o S3 Bucket com uma versão dos dados disponibilizados em:\n",
+        "\n",
+        "https://github.com/andre-marcos-perez/ebac-course-utils/tree/main/dataset\n",
+        "\n",
+        "Com base nas informações obtidas, empreenderemos uma série de análises detalhadas e aprofundadas. Estas análises servirão de fundamento para a formulação de decisões estratégicas, as quais visam impulsionar o crescimento sustentado e contínuo da organização, assegurando seu desenvolvimento e competitividade no mercado."
+      ],
+      "metadata": {
+        "id": "Z3uch6sLSIyE"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Distribuição de Idade e Sexo entre quem fez mais compras\n",
+        "\n",
+        "Nosso objetivo é analisar detalhadamente a distribuição demográfica de nossos clientes mais assíduos, focando especialmente na amostragem de gênero e nas diferentes faixas etárias daqueles que realizaram o maior número de compras."
+      ],
+      "metadata": {
+        "id": "nMdCduCfSIyF"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "SELECT idade, sexo, COUNT(*) AS qtd_clientes\n",
+        "FROM default.credito\n",
+        "GROUP BY idade, sexo\n",
+        "ORDER BY qtd_clientes DESC\n",
+        "LIMIT 10;"
+      ],
+      "metadata": {
+        "id": "bfeNR0AcSIyF"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "![image.png](attachment:2ebb8ce6-a5ae-405a-bb45-46fdd41c38ff.png)\n",
+        "\n",
+        "Analisamos que o segmento mais ativo em termos de volume de transações é composto predominantemente por indivíduos do sexo masculino, situados na faixa etária compreendida entre 36 e 57 anos. Essa constatação revela um padrão demográfico específico dentro do nosso público consumidor, indicando que homens de meia-idade desempenham um papel preponderante na movimentação de nossas vendas."
+      ],
+      "metadata": {
+        "id": "XLSQYl0gSIyG"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Faixa etária dos clientes do cartão\n",
+        "\n",
+        "Dado a informação anterior, resolvemos aprofundar o entendimento sobre a faixa etária que compõem a nossa clientela"
+      ],
+      "metadata": {
+        "id": "jSW2W15BSIyG"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "SELECT faixa_etaria, COUNT(*) AS qtd_clientes\n",
+        "FROM (\n",
+        "  SELECT\n",
+        "    CASE\n",
+        "      WHEN idade < 20 THEN '<20'\n",
+        "      WHEN idade BETWEEN 20 AND 29 THEN '20-29'\n",
+        "      WHEN idade BETWEEN 30 AND 39 THEN '30-39'\n",
+        "      WHEN idade BETWEEN 40 AND 49 THEN '40-49'\n",
+        "      WHEN idade BETWEEN 50 AND 59 THEN '50-59'\n",
+        "      ELSE '60+'\n",
+        "    END AS faixa_etaria\n",
+        "  FROM default.credito\n",
+        ") AS subquery\n",
+        "GROUP BY faixa_etaria\n",
+        "ORDER BY qtd_clientes DESC;"
+      ],
+      "metadata": {
+        "id": "aI4Xg_IiSIyG"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "![image.png](attachment:4121d3c2-aa3a-4768-a59b-b6e5fcb6a68e.png)\n",
+        "\n",
+        "Então faz total sentido que o grosso da clientela esteja entre 36 e 57 anos, haja visto que há uma grande predominância da faixa etária entre 40 e 59 anos na nossa cartela. Ao passo que os clientes entre 20 e 29 anos representam apenas uma pequena parcela e abaixo de 20 anos não há ninguém."
+      ],
+      "metadata": {
+        "id": "zGCy4bZeSIyH"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Aplicando o recorte de gênero nessa conta\n",
+        "\n",
+        "Entendemos porquê o público é predominantemente mais velho, mas agora vamos tentar entender a predominância masculina destrinchando as faixas etárias dividindo o gênero."
+      ],
+      "metadata": {
+        "id": "QM8c3cUkSIyH"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "SELECT faixa_etaria, sexo, COUNT(*) AS qtd_clientes\n",
+        "FROM (\n",
+        "  SELECT\n",
+        "    CASE\n",
+        "      WHEN idade < 20 THEN '<20'\n",
+        "      WHEN idade BETWEEN 20 AND 29 THEN '20-29'\n",
+        "      WHEN idade BETWEEN 30 AND 39 THEN '30-39'\n",
+        "      WHEN idade BETWEEN 40 AND 49 THEN '40-49'\n",
+        "      WHEN idade BETWEEN 50 AND 59 THEN '50-59'\n",
+        "      ELSE '60+'\n",
+        "    END AS faixa_etaria,\n",
+        "    sexo\n",
+        "  FROM default.credito\n",
+        ") AS subquery\n",
+        "GROUP BY faixa_etaria, sexo\n",
+        "ORDER BY qtd_clientes DESC;"
+      ],
+      "metadata": {
+        "id": "pASc-JYpSIyH"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "![image.png](attachment:b7188a33-d3af-4a08-b8a9-06e319247cca.png)\n",
+        "\n",
+        "E fica claro que a clientela feminina só é maior, e apenas ligeiramente maior (2 clientes), na faixa acima de 60 anos. Em todas as outras, a predominância masculina é bem grande."
+      ],
+      "metadata": {
+        "id": "x4PzAU-6SIyI"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Analisando o limite de crédito\n",
+        "\n",
+        "Será que o limite de crédito oferecido aos clientes exerce um impacto substancial no volume de compras efetuado por eles? Vamos realizar uma análise para explorar essa correlação."
+      ],
+      "metadata": {
+        "id": "l_KW3id8SIyI"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "SELECT\n",
+        "  faixa_etaria,\n",
+        "  sexo,\n",
+        "  ROUND(AVG(CAST(limite_credito AS double)), 2) AS media_limite_credito\n",
+        "FROM (\n",
+        "  SELECT\n",
+        "    CASE\n",
+        "      WHEN idade < 20 THEN '<20'\n",
+        "      WHEN idade BETWEEN 20 AND 29 THEN '20-29'\n",
+        "      WHEN idade BETWEEN 30 AND 39 THEN '30-39'\n",
+        "      WHEN idade BETWEEN 40 AND 49 THEN '40-49'\n",
+        "      WHEN idade BETWEEN 50 AND 59 THEN '50-59'\n",
+        "      ELSE '60+'\n",
+        "    END AS faixa_etaria,\n",
+        "    sexo,\n",
+        "    limite_credito\n",
+        "  FROM default.credito\n",
+        ") AS subquery\n",
+        "GROUP BY faixa_etaria, sexo\n",
+        "ORDER BY media_limite_credito DESC;"
+      ],
+      "metadata": {
+        "id": "wuyquC9NSIyI"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "![image.png](attachment:25a0f372-acf3-44c9-881d-99b5e9f166e6.png)\n",
+        "\n",
+        "Aqui limitamos a média de crédito a duas casas decimais para nos aproximar de um valor real. E como é de se supor, o grupo com mais volumes de compra é justamente o que tem mais crédito disponível. Chama a atenção também como homens acima de 60 anos tem crédito disponível e não o utilizam."
+      ],
+      "metadata": {
+        "id": "QvF38_ZUSIyI"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Estado civil interferindo no valor gasto\n",
+        "\n",
+        "Vimos um pouco da influência da idade e gênero nos gastos e também como estão distribuídos os limites de crédito. Agora vamos ver se o estado civil,"
+      ],
+      "metadata": {
+        "id": "lLmzZHIpSIyI"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "SELECT\n",
+        "  estado_civil,\n",
+        "  CASE\n",
+        "    WHEN idade < 20 THEN '<20'\n",
+        "    WHEN idade BETWEEN 20 AND 29 THEN '20-29'\n",
+        "    WHEN idade BETWEEN 30 AND 39 THEN '30-39'\n",
+        "    WHEN idade BETWEEN 40 AND 49 THEN '40-49'\n",
+        "    WHEN idade >= 50 THEN '50+'\n",
+        "  END AS faixa_etaria,\n",
+        "  ROUND(AVG(valor_transacoes_12m), 2) AS media_valor_gasto\n",
+        "FROM default.credito\n",
+        "WHERE estado_civil <> 'na'\n",
+        "GROUP BY estado_civil,\n",
+        "  CASE\n",
+        "    WHEN idade < 20 THEN '<20'\n",
+        "    WHEN idade BETWEEN 20 AND 29 THEN '20-29'\n",
+        "    WHEN idade BETWEEN 30 AND 39 THEN '30-39'\n",
+        "    WHEN idade BETWEEN 40 AND 49 THEN '40-49'\n",
+        "    WHEN idade >= 50 THEN '50+'\n",
+        "  END\n",
+        "ORDER BY media_valor_gasto DESC;"
+      ],
+      "metadata": {
+        "id": "PzK3LD2_SIyI"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "![image.png](attachment:cc33b026-b2fa-4608-80bc-8abc61c28d29.png)\n",
+        "\n",
+        "Aqui novamente limitamos o resultado a duas casas decimais para facilitar o entendimento. Também excluímos da análise aqueles que não tem informação fornecida sobre estado civil para que não distorcesse as nossas conclusões. É curioso que jovens solteiros e divorciados tenham uma média de gasto maior, provavelmente por terem que arcar com todos os próprios custos sozinhos, sem divisão com cônjuge."
+      ],
+      "metadata": {
+        "id": "6KILMGd7SIyI"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Conclusões\n",
+        "\n",
+        "* O público masculino mais velho gasta mais\n",
+        "* A faixa etária dos clientes é alta\n",
+        "* Os clientes homens são ampla maioria\n",
+        "* O que pode ser explicado pois é o grupo com mais crédito liberado\n",
+        "* Na média de gasto individual, casados gastam menos"
+      ],
+      "metadata": {
+        "id": "ucNgHQ_oSIyI"
+      }
+    }
+  ]
+}
